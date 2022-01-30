@@ -20,7 +20,20 @@ WindowManager:
         
 <MainScreen>:
     name: "mainScreen"
-    Button:
-        size: 100,100
-        size_hint: None, None
+
+    canvas.before:
+        Color:
+            rgba: 1, 1, 1, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    Pengelum:
+        id: pengelum
+        source: "frontend/pics/pengelum.png"
+        size: self.size
+        #size_hint: None, None
+        pos: 100,100
+    
+
         

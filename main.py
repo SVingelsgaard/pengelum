@@ -20,10 +20,7 @@ import time
 
 #window settings
 Config.set('graphics', 'window_state', 'maximized')
-Config.set('graphics', 'borderless', '0')
 Config.set('graphics', 'fullscreen', '1')
-#Config.set('graphics',
-
 
 
 class WindowManager(ScreenManager):
@@ -33,6 +30,9 @@ class StartScreen(Screen):
     pass
 
 class MainScreen(Screen):
+    pass
+
+class Pengelum(Image):
     pass
 
 #load kv file
@@ -66,5 +66,3 @@ class GUI(App):
 #runs program and cycle
 if __name__ == '__main__':
     GUI().run()
-
-
