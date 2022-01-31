@@ -13,9 +13,11 @@ from kivy.uix.scatterlayout import ScatterLayout
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.floatlayout import FloatLayout
 from kivy.core.text import Label
-import math
-import matplotlib.pyplot as plt
 from kivy.graphics import Line
+
+import numpy as np
+import matplotlib.pyplot as plt
+
 import time
 
 #window settings
@@ -33,7 +35,9 @@ class MainScreen(Screen):
     pass
 
 class Pengelum(Image):
-    pass
+    xPos = NumericProperty(0)
+    yPos = NumericProperty(0)
+    angle = NumericProperty(0)
 
 #load kv file
 kv = Builder.load_file("frontend/main.kv")
@@ -46,11 +50,15 @@ class GUI(App):
         self.runTime = 0
 
         #program variables
+        self.slider = self.root.get_screen('mainScreen').ids.slider
+        self.pengelum = self.root.get_screen('mainScreen').ids.pengelum
 
     #continus cycle
     def cycle(self, readCYCLETIME):
         if self.runTime != 0 and self.runTime < .03:
             time.sleep(1)
+
+        self.pengelum.xPos = self.slider.value
         
         self.runTime += readCYCLETIME
 
