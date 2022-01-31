@@ -23,17 +23,30 @@ WindowManager:
 
     canvas.before:
         Color:
-            rgba: 1, 1, 1, 1
+            rgba: 1, 0, 1, 1
         Rectangle:
             pos: self.pos
             size: self.size
+    FloatLayout:
+        size: root.size
+        Pengelum:
+            id: pengelum
+            #size: self.size
+            source: "frontend/pics/pengelum.png"
+            pos: 100, 0
+            #size_hint: None, None
 
-    Pengelum:
-        id: pengelum
-        source: "frontend/pics/pengelum.png"
-        size: self.size
-        #size_hint: None, None
-        pos: 100,100
-    
-
+        Widget:
+            canvas.before:
+                PushMatrix:
+                Color:
+                    rgba: 0, 0, 0, 1
+                Rectangle:
+                    pos: 90,90
+                    size: 10,10
+            canvas.after:
+                PopMatrix:
+        Image:
+            source: "frontend/pics/Leg.png"
+            pos: 0,0
         
