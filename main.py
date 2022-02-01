@@ -37,7 +37,7 @@ class MainScreen(Screen):
 class Pengelum(Image):
     xPos = NumericProperty(0)
     yPos = NumericProperty(0)
-    angle = NumericProperty(0)
+    angle = NumericProperty(10)
 
 #load kv file
 kv = Builder.load_file("frontend/main.kv")
