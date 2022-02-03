@@ -30,7 +30,8 @@ WindowManager:
             size: self.size
     canvas.after:
         PopMatrix:
-    FloatLayout:
+    Envirement:
+        id: env
         Pengelum:
             id: pengelum
             size_hint: None, None
@@ -40,7 +41,7 @@ WindowManager:
             canvas.before:
                 PushMatrix:
                 Rotate:
-                    angle: self.angle+90
+                    angle: self.angleDegrees+90
                     origin: self.center
             canvas.after:
                 PopMatrix:

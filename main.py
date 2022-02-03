@@ -1,3 +1,4 @@
+from operator import length_hint
 import kivy
 from kivy.app import App
 from kivy.uix.widget import Widget
@@ -17,7 +18,6 @@ from kivy.graphics import Line
 
 import numpy as np
 import matplotlib.pyplot as plt
-
 import time
 
 #window settings
@@ -34,10 +34,22 @@ class StartScreen(Screen):
 class MainScreen(Screen):
     pass
 
+class Envirement(FloatLayout):
+    g = NumericProperty(-9.81)#m/s^2
 class Pengelum(Image):
-    xPos = NumericProperty(0)
-    yPos = NumericProperty(0)
-    angle = NumericProperty(10)
+    #for graphics
+    xPos = NumericProperty(0)#px
+    yPos = NumericProperty(0)#px
+    angleDegrees = NumericProperty(0)
+    
+
+    #for math shit
+    theta = NumericProperty(.9*np.pi)
+    L = NumericProperty(325)#length of pengelum. In meters on screen(.06). 325px(to the center of the blub)
+    xx = NumericProperty(0.0)#distance of arc form 0deg to pengelum. In meters 
+    rotGrav = NumericProperty(0.0)#gravety in the direction of rotation
+    rotVel = NumericProperty(0.0)
+
 
 #load kv file
 kv = Builder.load_file("frontend/main.kv")
@@ -47,25 +59,56 @@ class GUI(App):
     def on_start(self): #variables
         #system variables
         self.setCYCLETIME = 0.02
+        self.readCYCLETIME = 0
         self.runTime = 0
+        self.env = self.root.get_screen('mainScreen').ids.env
 
         #program variables
         self.slider = self.root.get_screen('mainScreen').ids.slider
         self.pengelum = self.root.get_screen('mainScreen').ids.pengelum
 
+        #graph variables
+        self.fig = plt.figure()
+        self.ax = self.fig.add_subplot()
+        self.fig.show()
+        self.x = []
+
     #continus cycle
     def cycle(self, readCYCLETIME):
+        self.readCYCLETIME = readCYCLETIME
         if self.runTime != 0 and self.runTime < .03:
             time.sleep(1)
 
-        self.pengelum.xPos = self.slider.value
+
+        self.mafs()
+
         
-        self.runTime += readCYCLETIME
+        
+        
+        #update grapics
+        self.pengelum.angleDegrees = int(np.degrees(self.pengelum.theta))
+        #self.pengelum.xPos = self.slider.value
+
+        self.runTime += readCYCLETIME 
+
+    def mafs(self):
+        self.pengelum.xx = self.pengelum.L * self.pengelum.theta#calc x. do not thik i need it
+
+        self.pengelum.rotGrav = float(self.env.g * np.sin(self.pengelum.theta))
+
+        self.pengelum.rotVel += (self.pengelum.rotGrav/self.pengelum.L)
+
+        self.pengelum.theta += self.pengelum.rotVel * self.readCYCLETIME
+
+    def runGraph(self):
+        self.x.append(self.pengelum.theta)
+        self.ax.plot(self.x)
+        self.fig.canvas.draw()
+        #self.ax.set_xlim(left=max(0, ))
 
     #runns cycle
     def runApp(self):
         Clock.schedule_interval(self.cycle, self.setCYCLETIME)
-
 
     #runs myApp(graphics)
     def build(self):
