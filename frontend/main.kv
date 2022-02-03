@@ -45,6 +45,7 @@ WindowManager:
                     origin: self.center
             canvas.after:
                 PopMatrix:
+
         Widget:
             canvas.before:
                 Color:
@@ -63,12 +64,6 @@ WindowManager:
                 max: 484
                 step: 1
                 orientation: 'horizontal'
-
-        
-        
-        
-        
-        
         
         Widget:
             canvas.before:
@@ -80,4 +75,18 @@ WindowManager:
                     size: 10,10
             canvas.after:
                 PopMatrix:
+        
+        Button:
+            size_hint: None, None
+            size: 100,100
+            text: "show graph"
+            pos: 0,0
+            on_release: app.showGraph()
+
+        
+        Output:
+            id:output
+            pos: 0, -root.height/2 +30
+            text: f"output: {self.text}"
+            color: "black"
         

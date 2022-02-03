@@ -1,4 +1,5 @@
 from operator import length_hint
+import string
 import kivy
 from kivy.app import App
 from kivy.uix.widget import Widget
@@ -8,12 +9,13 @@ from kivy.clock import Clock
 from kivy.config import Config
 from kivy.uix.image import Image
 from kivy.uix.button import Button
+from kivy.uix.label import Label
 from kivy.properties import NumericProperty
-from kivy.properties import ListProperty
+from kivy.properties import ListProperty, StringProperty
 from kivy.uix.scatterlayout import ScatterLayout
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.floatlayout import FloatLayout
-from kivy.core.text import Label
+
 from kivy.graphics import Line
 
 import numpy as np
@@ -35,7 +37,13 @@ class MainScreen(Screen):
     pass
 
 class Envirement(FloatLayout):
-    g = NumericProperty(-9.81)#m/s^2
+    g = NumericProperty(-9.81/10)#m/s^2
+    M = NumericProperty(10)# how manny pixels in a meter
+
+
+class Output(Label):
+    text = StringProperty("")
+    
 class Pengelum(Image):
     #for graphics
     xPos = NumericProperty(0)#px
@@ -44,11 +52,12 @@ class Pengelum(Image):
     
 
     #for math shit
-    theta = NumericProperty(.9*np.pi)
-    L = NumericProperty(325)#length of pengelum. In meters on screen(.06). 325px(to the center of the blub)
+    theta = NumericProperty(.99*np.pi)
+    L = NumericProperty(15)#length of pengelum. In meters on screen(.06). 325px(to the center of the blub)
     xx = NumericProperty(0.0)#distance of arc form 0deg to pengelum. In meters 
-    rotGrav = NumericProperty(0.0)#gravety in the direction of rotation
+    rotAcc = NumericProperty(0.0)#gravety in the direction of rotation
     rotVel = NumericProperty(0.0)
+
 
 
 #load kv file
@@ -65,13 +74,16 @@ class GUI(App):
 
         #program variables
         self.slider = self.root.get_screen('mainScreen').ids.slider
+        self.sliderAcc = 0
+        self.sliderLast = 0
         self.pengelum = self.root.get_screen('mainScreen').ids.pengelum
 
+        self.output = self.root.get_screen('mainScreen').ids.output
+
         #graph variables
-        self.fig = plt.figure()
-        self.ax = self.fig.add_subplot()
-        self.fig.show()
+        self.y = []
         self.x = []
+        self.y2 = []
 
     #continus cycle
     def cycle(self, readCYCLETIME):
@@ -82,29 +94,60 @@ class GUI(App):
 
         self.mafs()
 
-        
-        
-        
+
+
+        #graph
+        self.x.append(self.runTime)
+        self.y2.append(self.pengelum.rotAcc)
+        self.y.append(self.sliderAcc)
+
+
         #update grapics
-        self.pengelum.angleDegrees = int(np.degrees(self.pengelum.theta))
-        #self.pengelum.xPos = self.slider.value
+        self.pengelum.angleDegrees = float(np.degrees(self.pengelum.theta))
+        self.pengelum.xPos = self.slider.value
 
         self.runTime += readCYCLETIME 
+
+
+
+
 
     def mafs(self):
         self.pengelum.xx = self.pengelum.L * self.pengelum.theta#calc x. do not thik i need it
 
-        self.pengelum.rotGrav = float(self.env.g * np.sin(self.pengelum.theta))
+        if (self.pengelum.theta <.5*np.pi) and (self.pengelum.theta > -.5*np.pi):
+            self.sliderAcc = float(((self.slider.value - self.sliderLast)*np.sin(self.pengelum.theta))/76)#constant to get right dim maby. 
+        else:
+            self.sliderAcc = float(((self.slider.value - self.sliderLast)*np.cos(self.pengelum.theta))/76)#constant to get right dim maby. 
 
-        self.pengelum.rotVel += (self.pengelum.rotGrav/self.pengelum.L)
+        self.output.text = str((self.pengelum.theta/np.pi))
+
+
+
+        self.pengelum.rotAcc = (float((self.env.g/self.pengelum.L) * np.sin(self.pengelum.theta)))-(self.pengelum.rotVel * .01)-self.sliderAcc
+
+        self.pengelum.rotVel += self.pengelum.rotAcc
+
+
+
+        
+
+        
+        
+        
+        
+        
+        self.sliderLast = self.slider.value
+
 
         self.pengelum.theta += self.pengelum.rotVel * self.readCYCLETIME
 
-    def runGraph(self):
-        self.x.append(self.pengelum.theta)
-        self.ax.plot(self.x)
-        self.fig.canvas.draw()
-        #self.ax.set_xlim(left=max(0, ))
+    def showGraph(self):
+        plt.title("pengelum angle")
+        plt.plot(self.x, self.y)
+        plt.plot(self.x, self.y2)
+        #print(f"x: {self.x} y: {self.y}")
+        plt.show()
 
     #runns cycle
     def runApp(self):
