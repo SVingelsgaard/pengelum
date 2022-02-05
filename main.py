@@ -16,6 +16,8 @@ from kivy.properties import ListProperty, StringProperty
 from kivy.uix.scatterlayout import ScatterLayout
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.floatlayout import FloatLayout
+from kivy.uix.relativelayout import RelativeLayout
+from kivy.uix.boxlayout import BoxLayout
 from kivy.garden.matplotlib.backend_kivyagg import FigureCanvasKivyAgg
 
 
@@ -62,9 +64,8 @@ class Pengelum(Image):
     rotAcc = NumericProperty(0.0)#gravety in the direction of rotation
     rotVel = NumericProperty(0.0)
 
-class Graph(FigureCanvasKivyAgg):
-    def __init__(self, **kwargs):
-        super().__init__(plt.gcf(), **kwargs)
+class Graph(BoxLayout):
+    pass
 
 class GUI(App):
     
@@ -83,15 +84,20 @@ class GUI(App):
 
         self.output = self.root.get_screen('mainScreen').ids.output
 
+        self.graph = self.root.get_screen('mainScreen').ids.graph
+
+        self.graphLen = 3*60#sampels/frames in the plot
+
         #graph variables
-        self.y = [0,1,2]
-        self.x = [0,1,2]
+        self.y = self.graphLen * [None]
+        self.x = self.graphLen * [None]
         self.y2 = []
 
-        plt.title("pengelum angle")
-        plt.xlabel("t")
-        plt.ylabel("angle")
-        plt.plot(self.x,self.y)
+
+        self.graph.add_widget(FigureCanvasKivyAgg(plt.gcf()))
+        
+
+        
         
 
 
@@ -109,14 +115,16 @@ class GUI(App):
         #graph
         self.x.append(self.runTime)
         self.y2.append(self.pengelum.rotAcc)
-        self.y.append(float(self.output.text))
+        self.y.append(np.degrees(self.pengelum.theta))
         
 
 
         #update grapics
         self.pengelum.angleDegrees = float(np.degrees(self.pengelum.theta))
         self.pengelum.xPos = self.slider.value
+        self.updateGraph()
 
+        #runtime
         self.runTime += readCYCLETIME 
 
 
@@ -127,7 +135,7 @@ class GUI(App):
         self.pengelum.xx = self.pengelum.L * self.pengelum.theta#calc x. do not thik i need it
 
         if (self.pengelum.theta <.5*np.pi) and (self.pengelum.theta > -.5*np.pi):
-            self.sliderAcc = float(((self.slider.value - self.sliderLast)*np.sin(self.pengelum.theta))*self.setCYCLETIME*(1/self.pengelum.L))#constant to get right dim maby. 
+            self.sliderAcc = float(((self.slider.value - self.sliderLast)*np.sin(self.pengelum.theta))*self.setCYCLETIME)#constant to get right dim maby. 
         else:
             self.sliderAcc = float(((self.slider.value - self.sliderLast)*np.cos(self.pengelum.theta))*self.setCYCLETIME)#constant to get right dim maby. 
 
@@ -153,9 +161,21 @@ class GUI(App):
 
         self.pengelum.theta += self.pengelum.rotVel * self.readCYCLETIME
 
-    def showGraph(self):
+    def updateGraph(self):
         
-        print(self.x)
+        plt.clf()
+
+        plt.title("pengelum angle")
+        plt.xlabel("t")
+        plt.ylabel("angle")
+        #plt.ylim((25,250))
+
+        self.graph.clear_widgets()
+        self.x = self.x[-self.graphLen:]
+        self.y = self.y[-self.graphLen:]
+        plt.plot(self.x, self.y, 'k')
+        plt.grid()
+        self.graph.add_widget(FigureCanvasKivyAgg(plt.gcf()))
 
     #runns cycle
     def runApp(self):
