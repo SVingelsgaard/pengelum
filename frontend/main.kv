@@ -90,6 +90,12 @@ WindowManager:
             text: f"output: {self.text}"
             color: "black"
 
-        Graph:
-            
+        RelativeLayout:
+            size: 200,200
+            size_hint: None, None
+            pos: root.width - self.width,0
+            Graph:
+                BoxLayout:
+                    id: graph
+
         

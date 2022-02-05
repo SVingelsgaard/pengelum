@@ -1,3 +1,4 @@
+from doctest import master
 from operator import length_hint
 import string
 import kivy
@@ -15,16 +16,19 @@ from kivy.properties import ListProperty, StringProperty
 from kivy.uix.scatterlayout import ScatterLayout
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.floatlayout import FloatLayout
+from kivy.garden.matplotlib.backend_kivyagg import FigureCanvasKivyAgg
+
 
 from kivy.graphics import Line
+
 
 import numpy as np
 import matplotlib.pyplot as plt
 import time
 
 #window settings
-Config.set('graphics', 'window_state', 'maximized')
-Config.set('graphics', 'fullscreen', '1')
+"""Config.set('graphics', 'window_state', 'maximized')
+Config.set('graphics', 'fullscreen', '1')"""
 
 
 class WindowManager(ScreenManager):
@@ -42,7 +46,7 @@ class Envirement(FloatLayout):
 
 
 class Output(Label):
-    text = StringProperty("")
+    text = StringProperty("0.0")
     
 class Pengelum(Image):
     #for graphics
@@ -58,10 +62,9 @@ class Pengelum(Image):
     rotAcc = NumericProperty(0.0)#gravety in the direction of rotation
     rotVel = NumericProperty(0.0)
 
-
-
-#load kv file
-kv = Builder.load_file("frontend/main.kv")
+class Graph(FigureCanvasKivyAgg):
+    def __init__(self, **kwargs):
+        super().__init__(plt.gcf(), **kwargs)
 
 class GUI(App):
     
@@ -81,9 +84,16 @@ class GUI(App):
         self.output = self.root.get_screen('mainScreen').ids.output
 
         #graph variables
-        self.y = []
-        self.x = []
+        self.y = [0,1,2]
+        self.x = [0,1,2]
         self.y2 = []
+
+        plt.title("pengelum angle")
+        plt.xlabel("t")
+        plt.ylabel("angle")
+        plt.plot(self.x,self.y)
+        
+
 
     #continus cycle
     def cycle(self, readCYCLETIME):
@@ -99,7 +109,8 @@ class GUI(App):
         #graph
         self.x.append(self.runTime)
         self.y2.append(self.pengelum.rotAcc)
-        self.y.append(self.sliderAcc)
+        self.y.append(float(self.output.text))
+        
 
 
         #update grapics
@@ -116,9 +127,9 @@ class GUI(App):
         self.pengelum.xx = self.pengelum.L * self.pengelum.theta#calc x. do not thik i need it
 
         if (self.pengelum.theta <.5*np.pi) and (self.pengelum.theta > -.5*np.pi):
-            self.sliderAcc = float(((self.slider.value - self.sliderLast)*np.sin(self.pengelum.theta))/76)#constant to get right dim maby. 
+            self.sliderAcc = float(((self.slider.value - self.sliderLast)*np.sin(self.pengelum.theta))*self.setCYCLETIME*(1/self.pengelum.L))#constant to get right dim maby. 
         else:
-            self.sliderAcc = float(((self.slider.value - self.sliderLast)*np.cos(self.pengelum.theta))/76)#constant to get right dim maby. 
+            self.sliderAcc = float(((self.slider.value - self.sliderLast)*np.cos(self.pengelum.theta))*self.setCYCLETIME)#constant to get right dim maby. 
 
         self.output.text = str((self.pengelum.theta/np.pi))
 
@@ -143,11 +154,8 @@ class GUI(App):
         self.pengelum.theta += self.pengelum.rotVel * self.readCYCLETIME
 
     def showGraph(self):
-        plt.title("pengelum angle")
-        plt.plot(self.x, self.y)
-        plt.plot(self.x, self.y2)
-        #print(f"x: {self.x} y: {self.y}")
-        plt.show()
+        
+        print(self.x)
 
     #runns cycle
     def runApp(self):
@@ -155,7 +163,7 @@ class GUI(App):
 
     #runs myApp(graphics)
     def build(self):
-        return kv
+        return Builder.load_file("frontend/main.kv")
 
 #runs program and cycle
 if __name__ == '__main__':
