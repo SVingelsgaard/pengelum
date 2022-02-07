@@ -59,7 +59,7 @@ class Pengelum(Image):
 
     #for math shit
     theta = NumericProperty(.99*np.pi)
-    L = NumericProperty(15)#length of pengelum. In meters on screen(.06). 325px(to the center of the blub)
+    L = NumericProperty(32.5)#length of pengelum. In meters on screen(.06). 325px(to the center of the blub)
     xx = NumericProperty(0.0)#distance of arc form 0deg to pengelum. In meters 
     rotAcc = NumericProperty(0.0)#gravety in the direction of rotation
     rotVel = NumericProperty(0.0)
@@ -95,6 +95,7 @@ class GUI(App):
 
 
         self.graph.add_widget(FigureCanvasKivyAgg(plt.gcf()))
+        #Clock.schedule_interval(self.updateGraph, .1)
         
 
         
@@ -109,20 +110,20 @@ class GUI(App):
 
 
         self.mafs()
-
+        self.updateGraph()
 
 
         #graph
-        self.x.append(self.runTime)
+        self.x.append(self.pengelum.theta)
         self.y2.append(self.pengelum.rotAcc)
-        self.y.append(np.degrees(self.pengelum.theta))
+        self.y.append(self.pengelum.rotVel)
         
 
 
         #update grapics
         self.pengelum.angleDegrees = float(np.degrees(self.pengelum.theta))
         self.pengelum.xPos = self.slider.value
-        self.updateGraph()
+        
 
         #runtime
         self.runTime += readCYCLETIME 
@@ -134,48 +135,50 @@ class GUI(App):
     def mafs(self):
         self.pengelum.xx = self.pengelum.L * self.pengelum.theta#calc x. do not thik i need it
 
-        if (self.pengelum.theta <.5*np.pi) and (self.pengelum.theta > -.5*np.pi):
-            self.sliderAcc = float(((self.slider.value - self.sliderLast)*np.sin(self.pengelum.theta))*self.setCYCLETIME)#constant to get right dim maby. 
-        else:
-            self.sliderAcc = float(((self.slider.value - self.sliderLast)*np.cos(self.pengelum.theta))*self.setCYCLETIME)#constant to get right dim maby. 
 
-        self.output.text = str((self.pengelum.theta/np.pi))
-
-
-
-        self.pengelum.rotAcc = (float((self.env.g/self.pengelum.L) * np.sin(self.pengelum.theta)))-(self.pengelum.rotVel * .01)-self.sliderAcc
-
-        self.pengelum.rotVel += self.pengelum.rotAcc
-
-
+        self.sliderAcc = -float(((self.slider.value/10) - self.sliderLast)*self.setCYCLETIME)#slider acc
+        if (np.cos(self.pengelum.theta)) > 0:
+            self.output.text = "down" 
+        else: 
+            self.output.text = "up"
+        self.sliderResult = self.sliderAcc * np.cos(self.pengelum.theta)#*self.pengelum.L
 
         
 
+        self.output.text = str((self.slider.value/10))
         
-        
-        
-        
-        
-        self.sliderLast = self.slider.value
 
 
-        self.pengelum.theta += self.pengelum.rotVel * self.readCYCLETIME
+        self.pengelum.rotAcc = float(((self.env.g/self.pengelum.L) * np.sin(self.pengelum.theta))-(self.pengelum.rotVel * .01))#rotvel * .01 = air resistance proportional to vel.
+
+        self.pengelum.rotVel += self.pengelum.rotAcc#+ float(self.sliderResult)
+
+
+
+
+        self.sliderLast = self.slider.value/10
+
+
+        self.pengelum.theta += self.pengelum.rotVel * self.readCYCLETIME+ float(self.sliderResult)
 
     def updateGraph(self):
         
         plt.clf()
 
         plt.title("pengelum angle")
-        plt.xlabel("t")
-        plt.ylabel("angle")
+        plt.xlabel("angle")
+        plt.ylabel("vel")
         #plt.ylim((25,250))
 
         self.graph.clear_widgets()
-        self.x = self.x[-self.graphLen:]
-        self.y = self.y[-self.graphLen:]
+        self.x = self.x#[-self.graphLen:]
+        self.y = self.y#[-self.graphLen:]
         plt.plot(self.x, self.y, 'k')
         plt.grid()
         self.graph.add_widget(FigureCanvasKivyAgg(plt.gcf()))
+
+    def otherPlt(self):
+        pass
 
     #runns cycle
     def runApp(self):
