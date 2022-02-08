@@ -43,7 +43,7 @@ class MainScreen(Screen):
     pass
 
 class Envirement(FloatLayout):
-    g = NumericProperty(-9.81/10)#m/s^2
+    g = NumericProperty(-70.81/10)#m/s^2
     M = NumericProperty(10)# how manny pixels in a meter
 
 
@@ -151,7 +151,7 @@ class GUI(App):
 
         self.pengelum.rotAcc = float(((self.env.g/self.pengelum.L) * np.sin(self.pengelum.theta))-(self.pengelum.rotVel * .01))#rotvel * .01 = air resistance proportional to vel.
 
-        self.pengelum.rotVel += self.pengelum.rotAcc#+ float(self.sliderResult)
+        self.pengelum.rotVel += self.pengelum.rotAcc#+ float(self.sliderResult*.5)
 
 
 
