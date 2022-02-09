@@ -88,13 +88,15 @@ class GUI(App):
 
         self.graphLen = 3*60#sampels/frames in the plot
 
+        self.errorLast = 0#for not fuck up
+
         #graph variables
-        self.y = self.graphLen * [None]
-        self.x = self.graphLen * [None]
+        self.y = []#self.graphLen * [None]
+        self.x = []#self.graphLen * [None]
         self.y2 = []
 
 
-        self.graph.add_widget(FigureCanvasKivyAgg(plt.gcf()))
+        #self.graph.add_widget(FigureCanvasKivyAgg(plt.gcf()))
         #Clock.schedule_interval(self.updateGraph, .1)
         
 
@@ -111,15 +113,20 @@ class GUI(App):
 
         self.mafs()
         self.updateGraph()
+        self.PID()
 
 
         #graph
-        self.x.append(self.pengelum.theta)
+        self.x.append(self.runTime)
+        self.y2.append(self.pengelum.theta/np.pi)
+        self.y.append(self.slider.value/484)
+
+        '''self.x.append(self.pengelum.theta)
         self.y2.append(self.pengelum.rotAcc)
-        self.y.append(self.pengelum.rotVel)
+        self.y.append(self.pengelum.rotVel)'''
         
 
-
+    
         #update grapics
         self.pengelum.angleDegrees = float(np.degrees(self.pengelum.theta))
         self.pengelum.xPos = self.slider.value
@@ -136,7 +143,7 @@ class GUI(App):
         self.pengelum.xx = self.pengelum.L * self.pengelum.theta#calc x. do not thik i need it
 
 
-        self.sliderAcc = -float(((self.slider.value/10) - self.sliderLast)*self.setCYCLETIME)#slider acc
+        self.sliderAcc = -float(((self.slider.value/10) - self.sliderLast)*self.readCYCLETIME)#slider acc
         if (np.cos(self.pengelum.theta)) > 0:
             self.output.text = "down" 
         else: 
@@ -161,19 +168,43 @@ class GUI(App):
 
         self.pengelum.theta += self.pengelum.rotVel * self.readCYCLETIME+ float(self.sliderResult)
 
+    def PID(self):
+        self.kp = 1100# * .8
+        self.kd = 0#140 * .10 * 6.2
+
+
+        self.error = ((((self.pengelum.theta/np.pi)/2) % 1)-.5)*-2
+        if (self.error > .5) or (self.error < -.5) :
+            self.error = -self.error
+
+
+        #D
+        if self.readCYCLETIME == 0:
+            self.readCYCLETIME = self.setCYCLETIME#safing 1st cycle
+        self.derivativeError = (self.error - self.errorLast) / self.readCYCLETIME
+        self.errorLast = self.error
+        
+        self.slider.value += ((self.kp * self.error) + (self.kd * self.derivativeError))*self.readCYCLETIME
+        if self.slider.value > 484:
+            self.slider.value = 484
+        elif self.slider.value < -484:
+            self.slider.value = -484
+
     def updateGraph(self):
         
         plt.clf()
 
         plt.title("pengelum angle")
-        plt.xlabel("angle")
-        plt.ylabel("vel")
+        plt.xlabel("t")
+        plt.ylabel("angle/sliderval")
         #plt.ylim((25,250))
 
         self.graph.clear_widgets()
-        self.x = self.x#[-self.graphLen:]
-        self.y = self.y#[-self.graphLen:]
+        self.x = self.x[-self.graphLen:]
+        self.y = self.y[-self.graphLen:]
+        self.y2 = self.y2[-self.graphLen:]
         plt.plot(self.x, self.y, 'k')
+        plt.plot(self.x, self.y2, 'r')
         plt.grid()
         self.graph.add_widget(FigureCanvasKivyAgg(plt.gcf()))
 
