@@ -43,7 +43,7 @@ class MainScreen(Screen):
     pass
 
 class Envirement(FloatLayout):
-    g = NumericProperty(-70.81/10)#m/s^2
+    g = NumericProperty(-29.81/10)#m/s^2
     M = NumericProperty(10)# how manny pixels in a meter
 
 
@@ -58,8 +58,8 @@ class Pengelum(Image):
     
 
     #for math shit
-    theta = NumericProperty(.99*np.pi)
-    L = NumericProperty(32.5)#length of pengelum. In meters on screen(.06). 325px(to the center of the blub)
+    theta = NumericProperty(.0*np.pi)
+    L = NumericProperty(22.5)#length of pengelum. In meters on screen(.06). 325px(to the center of the blub)
     xx = NumericProperty(0.0)#distance of arc form 0deg to pengelum. In meters 
     rotAcc = NumericProperty(0.0)#gravety in the direction of rotation
     rotVel = NumericProperty(0.0)
@@ -90,6 +90,10 @@ class GUI(App):
 
         self.errorLast = 0#for not fuck up
 
+        self.integralError = 0#allso for not fuckup
+        self.autoMod = False
+        self.plotGrap = False
+
         #graph variables
         self.y = []#self.graphLen * [None]
         self.x = []#self.graphLen * [None]
@@ -112,8 +116,10 @@ class GUI(App):
 
 
         self.mafs()
-        self.updateGraph()
-        self.PID()
+        if self.plotGrap:
+            self.updateGraph()
+        if self.autoMod:
+            self.PID()
 
 
         #graph
@@ -169,22 +175,31 @@ class GUI(App):
         self.pengelum.theta += self.pengelum.rotVel * self.readCYCLETIME+ float(self.sliderResult)
 
     def PID(self):
-        self.kp = 1800# * .8
-        self.kd = 0#140 * .10 * 6.2
+        self.kp = 15000# * .8
+        self.ki = 400000
+        self.kd = 500#140 * .10 * 6.2
 
-
+        #error 
         self.error = ((((self.pengelum.theta/np.pi)/2) % 1)-.5)*-2
-        if (self.error > .5) or (self.error < -.5) :
+        if (self.error > .5) or (self.error < -.5):
             self.error = -self.error
+            self.kp = 6000# for 22 g ish
 
+        #integral error
+        self.integralError += self.error * self.readCYCLETIME
 
-        #D
+        #derivative error
         if self.readCYCLETIME == 0:
             self.readCYCLETIME = self.setCYCLETIME#safing 1st cycle
         self.derivativeError = (self.error - self.errorLast) / self.readCYCLETIME
         self.errorLast = self.error
+
+        if (self.error > .1) or (self.error < -.1):
+            self.integralError = 0#reset integral when not upright. maby not good?... nvm, who cares
+            self.derivativeError = 0
+            
         
-        self.slider.value += ((self.kp * self.error) + (self.kd * self.derivativeError))*self.readCYCLETIME
+        self.slider.value += ((self.kp * self.error) + (self.ki * self.integralError) + (self.kd * self.derivativeError))*self.readCYCLETIME
         if self.slider.value > 484:
             self.slider.value = 484
         elif self.slider.value < -484:
@@ -208,8 +223,18 @@ class GUI(App):
         plt.grid()
         self.graph.add_widget(FigureCanvasKivyAgg(plt.gcf()))
 
-    def otherPlt(self):
-        pass
+    def autoMode(self):
+        if self.autoMod:
+            self.autoMod = False
+        else:
+            self.autoMod = True
+    def plotGraph(self):
+        if self.plotGrap:
+            self.plotGrap = False
+            self.graph.remove_widget(FigureCanvasKivyAgg(plt.gcf()))
+        else:
+            self.plotGrap = True
+
 
     #runns cycle
     def runApp(self):
