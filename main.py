@@ -169,7 +169,7 @@ class GUI(App):
         self.pengelum.theta += self.pengelum.rotVel * self.readCYCLETIME+ float(self.sliderResult)
 
     def PID(self):
-        self.kp = 1100# * .8
+        self.kp = 1800# * .8
         self.kd = 0#140 * .10 * 6.2
 
 
